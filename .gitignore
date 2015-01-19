@@ -10,6 +10,6 @@ rel/example_project
 .rebar
 
 out
-.idea
+.idea/workspace.xml
 *.iml
 *.iws
