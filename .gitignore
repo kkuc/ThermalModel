@@ -11,5 +11,4 @@ rel/example_project
 
 out
 .idea/workspace.xml
-*.iml
 *.iws
