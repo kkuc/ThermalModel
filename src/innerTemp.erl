@@ -14,7 +14,7 @@
 
 
 readInnerTemp() ->
-  whereis(innerTempPid)!{read, self()},
+  innerTempPid !{read, self()},
   readInput().
 
 updateInnerTemp(DeltaTemp) ->
