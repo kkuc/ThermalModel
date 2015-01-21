@@ -13,12 +13,12 @@
 %% API
 -export([readCp_Mp/0, readTempExp/0, readTimeU/0, simulParams/1]).
 
-
+% Params == {TUnit, Cp_Mp, TempExp}
 
 simulParams(Params)->
   receive
-    {updateTu, Tu} ->
-      simulParams(setelement(1, Params, Tu));
+    {updateTu, TUnit} ->
+      simulParams(setelement(1, Params, TUnit));
     {updateCp_Mp, Cp_Mp} ->
       simulParams(setelement(2, Params, Cp_Mp));
     {updateTempExp, TempExp} ->

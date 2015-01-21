@@ -18,25 +18,45 @@
 -compile([export_all, debug_info]).
 
 
-startSimulation()-> startSimulation(20, -10).
-startSimulation(TInner, TOuter) ->
-  register(innerTempPid,spawn(innerTemp, tempInner, [TInner])),
-  register(outerTempPid,spawn(outerTemp, tempOuter, [TOuter])),
-  register(simulParamsPid,spawn(simulParams, simulParams, [{10, 120960, 20}])), %{ TimeU = 60 sec, Cp_Mp = 120960, TempExp = 20 C }
-  register(maxHeaterPower,spawn(heater, maxHeaterPower, [500])),
-  register(heaterPower,spawn(heater, heaterPower, [500, TInner])),
-main(0, 60).
+connectionHandler() ->
+  register(connectionHandler, self()), 
+  receive
+    {MBoxPid, start, {InitailInnerTemp, Season, Hour, HeaterLevel, TUnit, TempExp}} ->
+      register(simulation, spawn(?MODULE, startSimulation, [InitailInnerTemp, Season, Hour, HeaterLevel, TUnit, TempExp]));
+    {MBoxPid, stop} ->
+      true; % trzeba to zakodzic - jak ubic
+    {MBoxPid, updateParams, {Season, Hour, HeaterLevel, TUnit, TempExp}} ->
+      true
 
-main(ActualTime, DeltaTime)->
-  sleep(1000),% tutaj można zrobić, zamiast tempego sleepa czekanie na podanie współczynników na receivie
+  end.
+
+
+startSimulation()-> startSimulation(25, bla, bla, 1, 60, 20).
+startSimulation(InitailInnerTemp, Season, Hour, HeaterLevel, TUnit, TempExp) ->
+  register(innerTempPid,spawn(innerTemp, tempInner, [InitailInnerTemp])),
+  register(outerTempPid,spawn(outerTemp, tempOuter, [-10])),
+  register(simulParamsPid,spawn(simulParams, simulParams, [{TUnit, 120960, TempExp}])), %{ TimeU = 60 sec, Cp_Mp = 120960, TempExp = 20 C }
+  register(maxHeaterPower,spawn(heater, maxHeaterPower, [HeaterLevel * 500])),
+  register(heaterPower,spawn(heater, heaterPower, [500, InitailInnerTemp])),
+main(0, 60, 20).
+
+main(ActualTime, DeltaTime, I)->
+
   K_OI = 8.80,
   Cp_Mp = 120960,
   DeltaTemp = ( K_OI * differenceTemp() + readHeaterPower() ) * DeltaTime / Cp_Mp,
   updateInnerTemp(DeltaTemp),
   NewTime = ActualTime + DeltaTime,
-  io:format("Aktualny czas: ~p sekund ~n",[NewTime]),
-  io:format("Aktualna temperatura: ~p stopni Celcjusza~n",[readInnerTemp()]),
-  main(NewTime, DeltaTime).
+ if
+   I>0    ->
+     main(NewTime, DeltaTime, I-1);
+   I == 0 ->
+     io:format("Aktualny czas: ~p sekund ~n",[NewTime]),
+     io:format("Aktualna temperatura: ~p stopni Celcjusza~n",[readInnerTemp()]),
+     sleep(1000),% tutaj można zrobić, zamiast tempego sleepa czekanie na podanie współczynników na receivie
+     main(NewTime, DeltaTime, 3600)
+
+ end.
 
 differenceTemp() ->
   readOuterTemp() - readInnerTemp().
