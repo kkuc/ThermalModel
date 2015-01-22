@@ -10,7 +10,7 @@
 -author("Krzysiek P").
 
 %% API
--export([sleep/1, readInput/0]).
+-export([sleep/1, readInput/0, readSelectInput/1]).
 
 sleep(T)->
   receive
@@ -21,4 +21,10 @@ sleep(T)->
 readInput()->
   receive
     All -> All
+  end.
+
+readSelectInput(IdAtom)->
+  receive
+    {IdAtom, Message} ->
+      Message
   end.

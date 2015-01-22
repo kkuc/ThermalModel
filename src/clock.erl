@@ -8,23 +8,29 @@
 %%%-------------------------------------------------------------------
 -module(clock).
 -author("Krzysiek P").
--import(utils,[readInput/0]).
+-import(utils,[readInput/0, readSelectInput/1]).
 -import(simulParams, [readTimeU/0]).
 %% API
 -export([clock/1, updateClockOneTick/0, readHour/0]).
 
 readHour() ->
   clockPid ! {read, self()},
-  readInput().
+  readSelectInput(clock).
 
 updateClockOneTick() ->
-  clockPid ! {update, readTimeU()}.
+  clockPid ! {update, readTimeU(), self()},
+  receive
+    {ok} ->
+      true
+  end.
 
 clock(Hour)->
   receive
-    {update, TickLenth} ->
+    {update, TickLenth, Pid} ->
       NewHour = Hour + TickLenth,
+      Pid ! {ok},
       clock(NewHour);
-    {read, Pid} -> Pid ! Hour,
+    {read, Pid} ->
+      Pid ! {clock, Hour},
       clock(Hour)
   end.

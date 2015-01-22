@@ -8,54 +8,69 @@
 %%%-------------------------------------------------------------------
 -module(heater).
 -author("Krzysiek P").
--import(utils, [readInput/0, sleep/1]).
+-import(utils, [readInput/0, sleep/1, readSelectInput/1]).
 -import(simulParams, [readTimeU/0,readTempExp/0, readCp_Mp/0 ]).
 -import(innerTemp, [updateInnerTemp/1, tempInner/1, readInnerTemp/0]).
 %% API
--export([heaterPower/2, readHeaterPower/0,maxHeaterPower/1,readMaxHeaterPower/0, switchHeater/1]).
+-export([heaterPower/2, readHeaterPower/0,maxHeaterPower/1,readMaxHeaterPower/0, switchHeater/1, updateHeaterPower/0]).
 
 heaterPower(PreviousPower, LastInnerTemp)->
   receive
     {read, Pid} ->
+      Pid ! {heaterPower, PreviousPower},
+      heaterPower(PreviousPower, LastInnerTemp);
+    {update, Pid} ->
       % to niżej to      =  Energia od grzejnika dana pokojowi - energia, o którą sumarycznie pokój się wzbogacił
-      EnergyMovedOutside = PreviousPower * readTimeU() - ((readInnerTemp()-LastInnerTemp) * readCp_Mp()), % to co upływa jest dodatnio
-      % zatem uzyskujemy w wyniku energię, która uszła na zewnątrz
-      EnergyNeeded = (readTempExp() - readInnerTemp()) * readCp_Mp(),
+      EnergyGiven = PreviousPower * readTimeU(),
+      TemperatureDifference = readInnerTemp()-LastInnerTemp,
+      TemperatureEnergyChange = TemperatureDifference * readCp_Mp(),
+      EnergyMovedOutside = EnergyGiven - (TemperatureEnergyChange), % to co upływa jest dodatnio
+% zatem uzyskujemy w wyniku energię, która uszła na zewnątrz
+      EnergyToExpectTemp = (readTempExp() - readInnerTemp()) * readCp_Mp(),
+      EnergyNeeded = EnergyToExpectTemp + EnergyMovedOutside,
+      PowerNedded = EnergyNeeded/readTimeU(),
       if
-        EnergyNeeded > 0 -> NewPower = max(min(EnergyNeeded + EnergyMovedOutside, readMaxHeaterPower()),0);
-        EnergyNeeded == 0 -> NewPower = PreviousPower;
-        EnergyNeeded < 0 -> NewPower = min(max(EnergyNeeded + EnergyMovedOutside, 0), readMaxHeaterPower())
+        EnergyToExpectTemp > 0 -> NewPower = max(min(PowerNedded, readMaxHeaterPower()),0.0);
+        EnergyToExpectTemp == 0 -> NewPower = PreviousPower;
+        EnergyToExpectTemp < 0 -> NewPower = min(max(PowerNedded, 0.0), readMaxHeaterPower())
       %tak jak pierwszy case tylko tutaj Energy Needed jest ujemne, nie do końca dobre, ale i tak nie powinno dojść do tego przypadku
       end,
-      Pid ! NewPower,
+      Pid ! {ok},
       heaterPower(NewPower, readInnerTemp())
   end.
 
-readMaxHeaterPower() ->
-  whereis(maxHeaterPower)!{read, self()},
-  readInput().
-
 readHeaterPower() ->
   whereis(heaterPower)!{read, self()},
-  readInput().
+  readSelectInput(heaterPower).
+
+
+updateHeaterPower() ->
+  whereis(heaterPower) ! {update, self()},
+ receive
+   {ok} ->
+     true
+ end.
+
+
+readMaxHeaterPower() ->
+  whereis(maxHeaterPower)!{read, self()},
+  readSelectInput(maxHeaterPower).
 
 switchHeater(Level)->
-  whereis(maxHeaterPower)!{switch, Level}.
+  whereis(maxHeaterPower)!{switch, Level, self()},
+  receive
+    {ok} ->
+      true
+  end.
 
 
 maxHeaterPower(MaxPower)->
   receive
-    {switch,0} ->
-      maxHeaterPower(0);
-    {switch,1} ->
-      maxHeaterPower(500);
-    {switch,2} ->
-      maxHeaterPower(1000);
-    {switch,3} ->
-      maxHeaterPower(1500);
-    {switch,4} ->
-      maxHeaterPower(2000);
-    {read, Pid} -> Pid ! MaxPower,
+    {switch,A, Pid} ->
+      maxHeaterPower((A-1)*500.0),
+      Pid ! {ok};
+    {read, Pid} ->
+      Pid ! {maxHeaterPower, MaxPower},
       maxHeaterPower(MaxPower)
   end.
 

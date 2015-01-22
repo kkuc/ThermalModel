@@ -8,23 +8,30 @@
 %%%-------------------------------------------------------------------
 -module(innerTemp).
 -author("Krzysiek P").
--import(utils, [readInput/0, sleep/1]).
+-import(utils, [readInput/0, sleep/1, readSelectInput/1]).
 %% API
 -export([readInnerTemp/0, tempInner/1, updateInnerTemp/1]).
 
 
 readInnerTemp() ->
   innerTempPid !{read, self()},
-  readInput().
+  readSelectInput(innerTemp).
 
 updateInnerTemp(DeltaTemp) ->
-  whereis(innerTempPid)!{update, DeltaTemp}.
+  whereis(innerTempPid)!{update, DeltaTemp, self()},
+  receive
+    {ok} ->
+      true
+  end.
 
 tempInner(Temp)->
   receive
-    {update, Delta} ->
+    {update, Delta, Pid} ->
+      Pid ! {ok},
       tempInner(Temp+Delta);
-    {read, Pid} -> Pid ! Temp,
+
+    {read, Pid} ->
+      Pid ! {innerTemp, Temp},
       tempInner(Temp)
   end.
 
