@@ -25,7 +25,7 @@ heaterPower(PreviousPower, LastInnerTemp)->
       TemperatureDifference = readInnerTemp()-LastInnerTemp,
       TemperatureEnergyChange = TemperatureDifference * readCp_Mp(),
       EnergyMovedOutside = EnergyGiven - (TemperatureEnergyChange), % to co upływa jest dodatnio
-% zatem uzyskujemy w wyniku energię, która uszła na zewnątrz
+      % zatem uzyskujemy w wyniku energię, która uszła na zewnątrz
       EnergyToExpectTemp = (readTempExp() - readInnerTemp()) * readCp_Mp(),
       EnergyNeeded = EnergyToExpectTemp + EnergyMovedOutside,
       PowerNedded = EnergyNeeded/readTimeU(),

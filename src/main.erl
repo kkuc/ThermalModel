@@ -19,7 +19,8 @@
 
 
 start()->
-  register(connectionHandler, spawn(?MODULE, connectionHandler, [])).
+  register(connectionHandler, spawn(?MODULE, connectionHandler, [])),
+  sleep(100000).
 
 connectionHandler() ->
   receive
@@ -36,7 +37,7 @@ connectionHandler() ->
   end.
 
 
-startSimulation()-> startSimulation(-1.2, 0, 0, 4, 600, 1 , 20, 11111).
+startSimulation()-> startSimulation(-1.2, 0, 0, 4, 60, 1 , 20, 11111).
 startSimulation(InitailInnerTemp, Season, Hour, HeaterLevel, TUnit,IterSkipped, TempExp, MBoxPid) ->
   register(innerTempPid,spawn(innerTemp, tempInner, [InitailInnerTemp])),
   register(outerTempPid,spawn(outerTemp, tempOuter, [-10])),
@@ -44,15 +45,13 @@ startSimulation(InitailInnerTemp, Season, Hour, HeaterLevel, TUnit,IterSkipped, 
   register(maxHeaterPower,spawn(heater, maxHeaterPower, [HeaterLevel * 500.0])),
   register(heaterPower,spawn(heater, heaterPower, [0, InitailInnerTemp])),
   register(clockPid,spawn(clock, clock, [Hour])),
-spawn(?MODULE, main, [IterSkipped-1, MBoxPid]).
-%main(IterSkipped-1).
+  main(IterSkipped-1, MBoxPid).
 
 main(I, MBoxPid)->
   K_OI = 8.80,
   Cp_Mp = 120960,
   DeltaTemp = ( K_OI * differenceTemp() + readHeaterPower() ) * readTimeU() / Cp_Mp,
   updateClockOneTick(),
-  %hello(),
   updateInnerTemp(DeltaTemp),
   updateHeaterPower(),
   %updateOuterTemp(),
@@ -61,7 +60,7 @@ main(I, MBoxPid)->
    I>0 -> NewI = I-1;
    I == 0 ->
      % te dwie liniki ponizej zastepujemy wyslaniem messega z nowymi {innerTemp, OuterTemp, CurrentTime
-     %MBoxPid ! {self(), readInnerTemp(), readHour(), readHeaterPower()},
+     MBoxPid ! {self(), readInnerTemp(), readHour(), readHeaterPower()},
      io:format("Aktualny czas: ~p sekund ~n",[readHour()]),
      io:format("Aktualna temperatura: ~p stopni Celcjusza~n",[readInnerTemp()]),
      io:format("Aktualna moc farelki: ~p ~n",[readHeaterPower()]),
