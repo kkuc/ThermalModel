@@ -1,0 +1,6 @@
+#!/usr/bin/env escript
+-import(sim,[start/0]).
+
+main(_)->
+	sim:start(),
+	io:format("connection Handler started").
