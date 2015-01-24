@@ -12,7 +12,7 @@
 -import(simulParams, [readTimeU/0,readTempExp/0, readCp_Mp/0 ]).
 -import(innerTemp, [updateInnerTemp/1, tempInner/1, readInnerTemp/0]).
 %% API
--export([heaterPower/2, readHeaterPower/0,maxHeaterPower/1,readMaxHeaterPower/0, switchHeater/1, updateHeaterPower/0]).
+-export([heaterPower/2, readHeaterPower/0, maxHeaterPower/1, readMaxHeaterPower/0, switchHeater/1, updateHeaterPower/0, readHeaterLevel/0]).
 
 heaterPower(PreviousPower, LastInnerTemp)->
   receive
@@ -55,6 +55,9 @@ updateHeaterPower() ->
 readMaxHeaterPower() ->
   whereis(maxHeaterPower)!{read, self()},
   readSelectInput(maxHeaterPower).
+
+readHeaterLevel() ->
+  readMaxHeaterPower()/500.
 
 switchHeater(Level)->
   whereis(maxHeaterPower)!{switch, Level, self()},

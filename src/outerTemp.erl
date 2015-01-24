@@ -11,11 +11,15 @@
 -import(utils, [readInput/0, sleep/1,readSelectInput/1]).
  -import(clock, [readHour/0]).
 %% API
--export([readOuterTemp/0, tempOuter3/1, tempOuter/1, updateSeason/1]).
+-export([readOuterTemp/0, tempOuter3/1, tempOuter/1, updateSeason/1, readSeason/0]).
 
 
 readOuterTemp() ->
   whereis(outerTempPid)!{read, self()},
+  readSelectInput(outerTemp).
+
+readSeason() ->
+  whereis(outerTempPid)!{readSeason, self()},
   readSelectInput(outerTemp).
 
 tempOuter3(Temp)->
@@ -30,6 +34,9 @@ tempOuter(Season)->
     {read, Pid} ->
       Temp = seasonTempAtHour(Season, readHour()/3600),
       Pid ! {outerTemp, Temp},
+      tempOuter(Season);
+    {readSeason, Pid} ->
+      Pid ! {outerTemp, Season},
       tempOuter(Season);
     {update,NewSeason, Pid} ->
       Pid ! {ok},
