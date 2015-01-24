@@ -67,8 +67,8 @@ switchHeater(Level)->
 maxHeaterPower(MaxPower)->
   receive
     {switch,A, Pid} ->
-      maxHeaterPower((A-1)*500.0),
-      Pid ! {ok};
+      Pid ! {ok},
+      maxHeaterPower((A)*500.0);
     {read, Pid} ->
       Pid ! {maxHeaterPower, MaxPower},
       maxHeaterPower(MaxPower)

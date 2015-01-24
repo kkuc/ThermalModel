@@ -11,27 +11,53 @@
 -import(utils, [readInput/0, sleep/1, readSelectInput/1]).
 
 %% API
--export([readCp_Mp/0, readTempExp/0, readTimeU/0, simulParams/1, readIterSkipped/0]).
+-export([readCp_Mp/0, readTempExp/0, readTimeU/0, simulParams/1, readIterSkipped/0,
+        updateIterSkipped/1, updateTempExp/1, updateTu/1]).
 
 % Params == {TUnit, Cp_Mp, TempExp}
 
 simulParams(Params)->
   receive
-    {updateTu, TUnit} ->
+    {updateTu, TUnit, Pid} ->
+      Pid ! {ok},
       simulParams(setelement(1, Params, TUnit));
-    {updateCp_Mp, Cp_Mp} ->
+    {updateCp_Mp, Cp_Mp, Pid} ->
+      Pid ! {ok},
       simulParams(setelement(2, Params, Cp_Mp));
-    {updateTempExp, TempExp} ->
+    {updateTempExp, TempExp, Pid} ->
+      Pid ! {ok},
       simulParams(setelement(3, Params, TempExp));
-    {updateIterSkipped, IterSkipped} ->
+    {updateIterSkipped, IterSkipped, Pid} ->
+      Pid ! {ok},
       simulParams(setelement(4, Params, IterSkipped));
     {read, Pid} ->
       Pid ! {simulParams, Params},
       simulParams(Params)
   end.
 
+updateIterSkipped(NewIterSkipped)->
+  simulParamsPid ! {updateIterSkipped, NewIterSkipped, self()},
+  receive
+    {ok} ->
+      true
+  end.
 
-% to można zoptymalizować
+updateTempExp(NewTempExp)->
+  simulParamsPid!{updateTempExp, NewTempExp, self()},
+  receive
+    {ok} ->
+      true
+  end.
+
+updateTu(NewTu)->
+  simulParamsPid!{updateTu, NewTu, self()},
+  receive
+    {ok} ->
+      true
+  end.
+
+
+
 readTimeU()->
   whereis(simulParamsPid)!{read, self()},
   element(1,readSelectInput(simulParams)).

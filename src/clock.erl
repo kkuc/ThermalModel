@@ -11,7 +11,7 @@
 -import(utils,[readInput/0, readSelectInput/1]).
 -import(simulParams, [readTimeU/0]).
 %% API
--export([clock/1, updateClockOneTick/0, readHour/0]).
+-export([clock/1, updateClockOneTick/0, readHour/0, updateTotalHour/1]).
 
 readHour() ->
   clockPid ! {read, self()},
@@ -24,10 +24,26 @@ updateClockOneTick() ->
       true
   end.
 
+updateTotalHour(NewHour)->
+  clockPid ! {totalUpdate, NewHour, self()},
+  receive
+    {ok} ->
+      true
+  end.
+
 clock(Hour)->
   receive
     {update, TickLenth, Pid} ->
       NewHour = Hour + TickLenth,
+      if
+        NewHour > 3600 * 24 ->
+          NewHour2 = NewHour - 3600 * 24;
+        NewHour =< 3600 * 24 ->
+          NewHour2 = NewHour
+      end,
+      Pid ! {ok},
+      clock(NewHour2);
+    {totalUpdate, NewHour, Pid}->
       Pid ! {ok},
       clock(NewHour);
     {read, Pid} ->
