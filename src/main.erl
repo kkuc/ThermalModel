@@ -40,8 +40,13 @@ connectionHandler(MBoxSimulData) ->
       MBoxSimulData ! {crash},
       %tu trzeba dodac powiadomienie dla Javy
       connectionHandler(MBoxSimulData);
-    {stopSimulation} ->
-        exit(whereis(simulation), kill)
+    {MBoxMainPid, stopSimulation} ->
+      exit(whereis(simulation), kill),
+      MBoxMainPid ! {ok},
+      connectionHandler(MBoxSimulData);
+    {MBoxMainPid, closeAll} ->
+      exit(whereis(simulation), kill),
+      MBoxMainPid ! {ok}
   after 10000000 ->
     true
   end.
