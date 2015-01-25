@@ -50,7 +50,7 @@ connectionHandler(MBoxSimulData) ->
       MBoxMainPid ! {ok},
       connectionHandler(MBoxSimulData);
     {MBoxMainPid, closeAll} ->
-      exit(whereis(simulation), kill),
+      %exit(whereis(simulation), kill),  % trzeba bylo wywalić, bo whereis(simulation) moze zwracan undefined i wywala blad
       MBoxMainPid ! {ok}
   after 10000000 ->
     true
