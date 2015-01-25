@@ -33,15 +33,20 @@ connectionHandler(MBoxSimulData) ->
       monitor(process, whereis(simulation)),
       MBoxMainPid ! {ok},
       connectionHandler(NewMBoxSimulData);
-    {Message, Ref, process, PidOfCrashedProcess, Reason}->
-      io:format("Zdechl proces: ~p simulation z powodu: ~p ~n",[PidOfCrashedProcess,Reason]),
+    {Message, Ref, process, PidOfCrashedProcess, kill}->
+      io:format("Zdechl proces: ~p simulation z powodu: ~p ~n",[PidOfCrashedProcess,"kill"]),
       io:format("Pid symulacji: ~p  ~n",[whereis(simulation)]),
       io:format("Message: ~p ~n",[Message]),
       MBoxSimulData ! {crash},
       %tu trzeba dodac powiadomienie dla Javy
       connectionHandler(MBoxSimulData);
+    {Message, Ref, process, PidOfCrashedProcess, stopSimul}->
+      io:format("Zdechl proces: ~p simulation z powodu: ~p ~n",[PidOfCrashedProcess,"stopSimul"]),
+      io:format("Pid symulacji: ~p  ~n",[whereis(simulation)]),
+      io:format("Message: ~p ~n",[Message]),
+      connectionHandler(MBoxSimulData);
     {MBoxMainPid, stopSimulation} ->
-      exit(whereis(simulation), kill),
+      exit(whereis(simulation), stopSimul),
       MBoxMainPid ! {ok},
       connectionHandler(MBoxSimulData);
     {MBoxMainPid, closeAll} ->
