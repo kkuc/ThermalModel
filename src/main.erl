@@ -82,7 +82,7 @@ main(I, MBoxSimulDataPid, K_OI, Cp_Mp)->
    I == 0 ->
      % te dwie liniki ponizej zastepujemy wyslaniem messega z nowymi {innerTemp, OuterTemp, CurrentTime
      MBoxSimulDataPid ! {simulData, readInnerTemp(), readSeason(), readHour(), readHeaterLevel(), readTimeU(),
-       readIterSkipped(), readTempExp(), readHeaterPower(), readOuterTemp()},
+       readIterSkipped(), readTempExp(), readHeaterPower(), readOuterTemp(), K_OI, Cp_Mp},
      io:format("Aktualny czas: ~p sekund ~n",[readHour()]),
      io:format("Aktualna temperatura: ~p stopni Celcjusza~n",[readInnerTemp()]),
      io:format("Aktualna moc farelki: ~p ~n",[readHeaterPower()]),
